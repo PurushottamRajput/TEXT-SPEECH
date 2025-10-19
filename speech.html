@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Text Speak Block</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6000739132096891"
+     crossorigin="anonymous"></script>
+<!-- benar -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-6000739132096891"
+     data-ad-slot="6897900706"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+  <div class="card" role="region" aria-label="Text speak block">
+    <h1>Type karo aur Speak karo</h1>
+    <p class="sub">Jo bhi yahan likho — <strong>Speak</strong> dabane pe browser usko bolega. Voice, rate aur pitch change karo.</p>
+
+    <textarea id="txt" placeholder="Yahan apna text type karo... (Hindi/English)"></textarea>
+
+    <div class="controls">
+      <div class="left">
+        <button id="speakBtn" class="btn">Speak</button>
+        <button id="stopBtn" class="btn secondary">Stop</button>
+        <button id="copyBtn" class="btn secondary">Copy All</button>
+        <button id="clearBtn" class="btn secondary">Clear</button>
+      </div>
+
+      <div class="right">
+        <label>
+          Voice
+          <select id="voiceSelect"></select>
+        </label>
+
+        <label>
+          Rate
+          <input id="rate" type="range" min="0.5" max="2" step="0.1" value="1">
+        </label>
+
+        <label>
+          Pitch
+          <input id="pitch" type="range" min="0" max="2" step="0.1" value="1">
+        </label>
+
+        <div class="meta" id="charCount">0 chars</div>
+      </div>
+    </div>
+
+    <div class="small">
+      Tip: Best results ke liye modern browser (Chrome / Edge / Firefox) use karo.
+    </div>
+  </div>
+
+  <script>
+    const txt = document.getElementById('txt');
+    const speakBtn = document.getElementById('speakBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const rateInput = document.getElementById('rate');
+    const pitchInput = document.getElementById('pitch');
+    const charCount = document.getElementById('charCount');
+
+    let synth = window.speechSynthesis;
+    let voices = [];
+
+    function populateVoices(){
+      voices = synth.getVoices() || [];
+      voiceSelect.innerHTML = '';
+      if(voices.length === 0){
+        const opt = document.createElement('option');
+        opt.textContent = 'No voices available';
+        opt.value = '';
+        voiceSelect.appendChild(opt);
+        return;
+      }
+      voices.forEach((v, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `${v.name} ${v.lang ? ' — ' + v.lang : ''}${v.default ? ' (default)' : ''}`;
+        voiceSelect.appendChild(opt);
+      });
+      let idx = voices.findIndex(v => /hi|hi-IN|Hindi/i.test(v.lang) || /en-IN/i.test(v.lang));
+      if(idx >= 0) voiceSelect.value = idx;
+    }
+
+    populateVoices();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = populateVoices;
+    }
+
+    function speakText(){
+      if(!('speechSynthesis' in window)){
+        alert('Aapke browser me Speech Synthesis supported nahi hai.');
+        return;
+      }
+      const text = txt.value.trim();
+      if(!text){ alert('Pehle text type karo.'); return; }
+
+      synth.cancel();
+
+      const utter = new SpeechSynthesisUtterance(text);
+      const selectedIndex = parseInt(voiceSelect.value);
+      if(!isNaN(selectedIndex) && voices[selectedIndex]) utter.voice = voices[selectedIndex];
+      utter.rate = parseFloat(rateInput.value) || 1;
+      utter.pitch = parseFloat(pitchInput.value) || 1;
+
+      synth.speak(utter);
+
+      speakBtn.textContent = 'Speaking...';
+      speakBtn.disabled = true;
+      stopBtn.disabled = false;
+
+      utter.onend = () => {
+        speakBtn.textContent = 'Speak';
+        speakBtn.disabled = false;
+        stopBtn.disabled = true;
+      };
+    }
+
+    speakBtn.addEventListener('click', speakText);
+    stopBtn.addEventListener('click', () => {
+      if(synth && synth.speaking) synth.cancel();
+      speakBtn.textContent = 'Speak';
+      speakBtn.disabled = false;
+      stopBtn.disabled = true;
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(txt.value);
+        copyBtn.textContent = 'Copied ✓';
+        setTimeout(()=> copyBtn.textContent = 'Copy All', 1200);
+      } catch (e) {
+        txt.select();
+        document.execCommand('copy');
+        copyBtn.textContent = 'Copied ✓';
+        setTimeout(()=> copyBtn.textContent = 'Copy All', 1200);
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      txt.value = '';
+      txt.focus();
+      updateCharCount();
+    });
+
+    function updateCharCount(){
+      charCount.textContent = `${txt.value.length} chars`;
+    }
+    txt.addEventListener('input', updateCharCount);
+    updateCharCount();
+    stopBtn.disabled = true;
+  </script>
+</body>
+</html>
